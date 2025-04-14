@@ -1,0 +1,145 @@
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+export default function MentalWellnessApp() {
+  const [mood, setMood] = useState(5);
+  const [note, setNote] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const storedHistory = JSON.parse(localStorage.getItem("moodHistory")) || [];
+    setHistory(storedHistory);
+
+    const timer = setTimeout(() => {
+      if (!submitted) alert("Don't forget to check in today! 💬");
+    }, 10000); // Notify after 10 seconds
+
+    return () => clearTimeout(timer);
+  }, [submitted]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
+
+  const tips = [
+    "Take a deep breath and count to 10.",
+    "Go for a short walk to clear your mind.",
+    "Write down three things you're grateful for.",
+    "Practice 5 minutes of deep breathing.",
+  ];
+
+  const resources = [
+    { name: "National Helpline", url: "https://www.samhsa.gov/find-help/national-helpline" },
+    { name: "Headspace", url: "https://www.headspace.com/" },
+    { name: "Calm", url: "https://www.calm.com/" },
+  ];
+
+  const handleMoodSubmit = () => {
+    const newEntry = { date: new Date().toLocaleString(), mood, note };
+    const updatedHistory = [newEntry, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem("moodHistory", JSON.stringify(updatedHistory));
+    setSubmitted(true);
+    setNote("");
+  };
+
+  return (
+    <div className={`p-4 max-w-xl mx-auto ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+      <h1 className="text-2xl font-bold mb-4">Mental Wellness App</h1>
+      <div className="flex justify-between mb-4">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="home">Home</TabsTrigger>
+          <TabsTrigger value="tips">Tips</TabsTrigger>
+          <TabsTrigger value="resources">Resources</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+        <Button onClick={() => setDarkMode(!darkMode)} className="ml-2">
+          {darkMode ? "☀️ Light" : "🌙 Dark"}
+        </Button>
+      </div>
+
+      <Tabs defaultValue="home">
+        <TabsContent value="home">
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">How are you feeling today?</h2>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={mood}
+                onChange={(e) => setMood(Number(e.target.value))}
+                className="w-full"
+              />
+              <p className="text-center mt-2">Mood: {mood}</p>
+              <Textarea
+                placeholder="Any notes about your mood?"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="mt-2"
+              />
+              <Button className="mt-4 w-full" onClick={handleMoodSubmit}>
+                Submit Mood
+              </Button>
+              {submitted && (
+                <p className="mt-2 text-green-600">Mood saved. Good job checking in today!</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tips">
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">Mindfulness Tip</h2>
+              <p>{tips[Math.floor(Math.random() * tips.length)]}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resources">
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">Resources</h2>
+              <ul className="list-disc list-inside">
+                {resources.map((res, index) => (
+                  <li key={index}>
+                    <a href={res.url} target="_blank" className="text-blue-600 underline">
+                      {res.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">Mood History</h2>
+              {history.length === 0 ? (
+                <p>No entries yet. Start tracking your mood today!</p>
+              ) : (
+                <ul className="space-y-2">
+                  {history.map((entry, index) => (
+                    <li key={index} className="border-b pb-2">
+                      <p><strong>{entry.date}</strong></p>
+                      <p>Mood: {entry.mood}</p>
+                      <p>Note: {entry.note || "None"}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
